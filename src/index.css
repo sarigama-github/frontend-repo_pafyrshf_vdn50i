@@ -43,4 +43,15 @@
     --tw-exit-translate-x: initial;
     --tw-exit-translate-y: initial;
   }
+
+  /* Floating hero badges */
+  @keyframes floatY {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(0.5deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+  }
+  .flag-float {
+    animation: floatY 6s ease-in-out infinite;
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.25));
+  }
 }
