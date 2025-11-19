@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import Hero from './components/Hero'
 import StepPersonal from './components/StepPersonal'
 import StepSituation from './components/StepSituation'
@@ -6,6 +6,7 @@ import StepLoading from './components/StepLoading'
 import StepResult from './components/StepResult'
 import PrivacyModal from './components/PrivacyModal'
 import CalendlyModal from './components/CalendlyModal'
+import NetCalculator from './components/NetCalculator'
 
 const BACKEND = import.meta.env.VITE_BACKEND_URL || ''
 
@@ -67,6 +68,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       {step === 1 && <Hero onStart={start} />}
+
+      {/* Offering: 1) Nettolohnberechnung */}
+      <NetCalculator />
+
       {step === 2 && (
         <StepPersonal data={form} onChange={onChange} onNext={nextFromPersonal} onOpenPrivacy={()=>setPrivacyOpen(true)} />
       )}
