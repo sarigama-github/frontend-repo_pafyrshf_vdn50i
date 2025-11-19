@@ -1,73 +1,110 @@
-function App() {
+import { useState, useMemo } from 'react'
+import Hero from './components/Hero'
+import StepPersonal from './components/StepPersonal'
+import StepSituation from './components/StepSituation'
+import StepLoading from './components/StepLoading'
+import StepResult from './components/StepResult'
+import PrivacyModal from './components/PrivacyModal'
+import CalendlyModal from './components/CalendlyModal'
+
+const BACKEND = import.meta.env.VITE_BACKEND_URL || ''
+
+export default function App() {
+  const [step, setStep] = useState(1)
+  const [privacyOpen, setPrivacyOpen] = useState(false)
+  const [calOpen, setCalOpen] = useState(false)
+  const [result, setResult] = useState(null)
+
+  const [form, setForm] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    birth_date: '',
+    residence_at: '',
+    work_ch: '',
+    consent_email: false,
+    consent_whatsapp: false,
+    status: 'Neu-Grenzgänger',
+    family: 'Allein',
+    children_count: 0,
+    health: 'Bespreche ich persönlich',
+  })
+
+  const onChange = (patch) => setForm(prev => ({...prev, ...patch}))
+
+  const start = () => setStep(2)
+  const nextFromPersonal = () => setStep(3)
+  const submitSituation = async () => {
+    setStep(4)
+    try {
+      const payload = { lead: { ...form } }
+      const res = await fetch(`${BACKEND}/api/lead`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const data = await res.json()
+      setResult(data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  const gotoResult = () => setStep(5)
+
+  const showCalendly = () => setCalOpen(true)
+  const sendEmail = () => {
+    const mailto = `mailto:info@grenzgaenger-service.at?subject=${encodeURIComponent('🔥 Neuer Lead: Grenzgänger-Rechner')}&body=${encodeURIComponent(JSON.stringify({ form, result }, null, 2))}`
+    window.location.href = mailto
+  }
+
+  // Move from loading to result automatically
+  if (step === 4 && result) {
+    // small delay to keep animation
+    setTimeout(()=> setStep(5), 700)
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
+    <div className="min-h-screen bg-white text-slate-900">
+      {step === 1 && <Hero onStart={start} />}
+      {step === 2 && (
+        <StepPersonal data={form} onChange={onChange} onNext={nextFromPersonal} onOpenPrivacy={()=>setPrivacyOpen(true)} />
+      )}
+      {step === 3 && (
+        <StepSituation data={form} onChange={onChange} onNext={submitSituation} />
+      )}
+      {step === 4 && (
+        <StepLoading onDone={gotoResult} />
+      )}
+      {step === 5 && (
+        <StepResult result={result} onBook={showCalendly} onWhatsApp={()=>{}} onEmail={sendEmail} />
+      )}
 
-      <div className="relative min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
-          {/* Header with Flames icon */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-6">
-              <img
-                src="/flame-icon.svg"
-                alt="Flames"
-                className="w-24 h-24 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
-              />
-            </div>
+      {privacyOpen && <PrivacyModal open={privacyOpen} onClose={()=>setPrivacyOpen(false)} />}
+      {calOpen && <CalendlyModal open={calOpen} onClose={()=>setCalOpen(false)} />}
 
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-              Flames Blue
-            </h1>
-
-            <p className="text-xl text-blue-200 mb-6">
-              Build applications through conversation
-            </p>
+      <footer className="max-w-5xl mx-auto px-4 py-8 text-sm text-slate-600">
+        <div className="flex flex-col sm:flex-row justify-between gap-2">
+          <div>
+            <div className="font-semibold text-[#0A4D8A]">Grenzgänger-Service by Easyjack</div>
+            <div className="text-slate-500">Versicherung – aber einfach</div>
           </div>
-
-          {/* Instructions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 shadow-xl mb-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Describe your idea</h3>
-                <p className="text-blue-200/80 text-sm">Use the chat panel on the left to tell the AI what you want to build</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Watch it build</h3>
-                <p className="text-blue-200/80 text-sm">Your app will appear in this preview as the AI generates the code</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Refine and iterate</h3>
-                <p className="text-blue-200/80 text-sm">Continue the conversation to add features and make changes</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-blue-300/60">
-              No coding required • Just describe what you want
-            </p>
+          <div className="text-right">
+            <div>Kontakt: Daniel Peric</div>
+            <div>+43 660 522 11 49 • info@grenzgaenger-service.at</div>
           </div>
         </div>
+      </footer>
+
+      {/* Cookie notice minimal */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white border rounded-xl shadow p-3 text-sm max-w-md">
+        <div>
+          Wir verwenden nur technisch notwendige Cookies. <button className="underline text-[#0A4D8A]" onClick={()=>setPrivacyOpen(true)}>Mehr</button>
+        </div>
       </div>
+
+      {/* WhatsApp bubble */}
+      <a href="https://wa.me/436605221149?text=Hi%20Daniel!%20Vom%20Grenzg%C3%A4nger-Rechner..." target="_blank" rel="noreferrer" className="fixed bottom-4 right-4 bg-[#00B4D8] text-slate-900 font-semibold px-4 py-3 rounded-full shadow">💬 Fragen? WhatsApp</a>
     </div>
   )
 }
-
-export default App
